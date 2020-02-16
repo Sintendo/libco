@@ -79,6 +79,26 @@ static void (*co_swap)(cothread_t, cothread_t) = 0;
   }
 #else
   /* ABI: SystemV */
+  #ifdef LIBCO_INTERLEAVE
+  static const unsigned char co_swap_function[4096] = {
+    0x48, 0x89, 0x26,        /* mov [rsi],rsp    */
+    0x48, 0x8b, 0x27,        /* mov rsp,[rdi]    */
+    0x58,                    /* pop rax          */
+    0x48, 0x89, 0x6e, 0x08,  /* mov [rsi+ 8],rbp */
+    0x48, 0x8b, 0x6f, 0x08,  /* mov rbp,[rdi+ 8] */
+    0x48, 0x89, 0x5e, 0x10,  /* mov [rsi+16],rbx */
+    0x48, 0x8b, 0x5f, 0x10,  /* mov rbx,[rdi+16] */
+    0x4c, 0x89, 0x66, 0x18,  /* mov [rsi+24],r12 */
+    0x4c, 0x8b, 0x67, 0x18,  /* mov r12,[rdi+24] */
+    0x4c, 0x89, 0x6e, 0x20,  /* mov [rsi+32],r13 */
+    0x4c, 0x8b, 0x6f, 0x20,  /* mov r13,[rdi+32] */
+    0x4c, 0x89, 0x76, 0x28,  /* mov [rsi+40],r14 */
+    0x4c, 0x8b, 0x77, 0x28,  /* mov r14,[rdi+40] */
+    0x4c, 0x89, 0x7e, 0x30,  /* mov [rsi+48],r15 */
+    0x4c, 0x8b, 0x7f, 0x30,  /* mov r15,[rdi+48] */
+    0xff, 0xe0,              /* jmp rax          */
+  };
+  #else
   static const unsigned char co_swap_function[4096] = {
     0x48, 0x89, 0x26,        /* mov [rsi],rsp    */
     0x48, 0x8b, 0x27,        /* mov rsp,[rdi]    */
@@ -97,6 +117,7 @@ static void (*co_swap)(cothread_t, cothread_t) = 0;
     0x4c, 0x8b, 0x7f, 0x30,  /* mov r15,[rdi+48] */
     0xff, 0xe0,              /* jmp rax          */
   };
+  #endif
 
   #include <unistd.h>
   #include <sys/mman.h>
